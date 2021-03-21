@@ -3,7 +3,11 @@
 
 #include <Arduino.h>
 
-typedef void (*turnedCallback)(int pos);
+enum ClickType { click_short, click_long };
+enum ButtonState { button_down, button_up, button_down_long };
+
+typedef void (*turnCallback)(int pos);
+typedef void (*pressCallback)(ClickType pressType);
 
 class RotaryControl
 {
@@ -12,19 +16,26 @@ private:
   int _dtPin;
   int _swPin;
 
-  turnedCallback _turnedCallback; 
+  turnCallback _turnCallback; 
+  pressCallback _pressCallback; 
 
-  int _lastState = 0;
-  int _pos = 0;
+  uint8_t _rotorState = 0;
+  uint8_t _clk = 0;
+  uint8_t _cclk = 0;
 
-  int _clk = 0;
-  int _cclk = 0;
-
-  static void update();
-  int read();
+  uint8_t _buttonHistory =  0b11111111;
+  ButtonState _buttonState = button_up;
+  uint32_t _buttonDownMillis;
+  
+  void turned();
+  void pressed();
+  
+  static void turnedInterupt();
+  static void pressedInterupt();
 
 public:
-  RotaryControl(int clk, int dt, int sw, turnedCallback turnedCallback);
+  RotaryControl(int clk, int dt, int sw, turnCallback turnCallback, pressCallback pressCallback);
+  static void init();
 };
 
 #endif
